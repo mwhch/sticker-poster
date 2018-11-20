@@ -3,6 +3,31 @@
   <meta charset="utf-8">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script type="text/javascript">
+  function rgbToHex(rgbObj) { //rgbObj: Object that has keys "r", "g" and "b" which indicate the decimal rgb value
+    // convert colors into a hex string by checking if in only needs one digit - if so: add a "0" in front so there are always 6 hex digits for each color
+    // https://stackoverflow.com/questions/57803/how-to-convert-decimal-to-hex-in-javascript
+    var avgRhex = "";
+    if(rgbObj["r"].toString(16).length == 1) {
+      avgRhex = ""+0+""+rgbObj["r"].toString(16);
+    } else {
+      avgRhex = rgbObj["r"].toString(16);
+    }
+    var avgGhex = "";
+    if(rgbObj["g"].toString(16).length == 1) {
+      avgGhex = ""+0+""+rgbObj["g"].toString(16);
+    } else {
+      avgGhex = rgbObj["g"].toString(16);
+    }
+    var avgBhex = "";
+    if(rgbObj["b"].toString(16).length == 1) {
+      avgBhex = ""+0+""+rgbObj["b"].toString(16);
+    } else {
+      avgBhex = rgbObj["b"].toString(16);
+    }
+    //console.log("returned hex string "+"#"+avgRhex+avgGhex+avgBhex)
+    return "#"+avgRhex+avgGhex+avgBhex;
+  }
+
   $(function() {
     $('img').mouseup(function(e) {
         //var offset = $(this).offset();
@@ -13,6 +38,11 @@
         canvas.width = document.getElementById('myImg').width;
         canvas.height = document.getElementById('myImg').height;
         var ctx = canvas.getContext('2d');
+        // create further canvas to later draw on
+        var myCanvas = document.getElementById("myCanvas");
+        myCanvas.style.width = document.getElementById("myImg").width;
+        myCanvas.style.height= document.getElementById("myImg").height;
+        var context = myCanvas.getContext("2d");
         // copy image data into canvas
         var myImgElement = document.getElementById('myImg');
         ctx.drawImage(myImgElement, 0, 0);
@@ -43,7 +73,7 @@
         for(var i = 0; i < amountSegmentsY; i++) { // for each row
           var rowSegmentColors = [];
           for(var j = 0; j < amountSegmentsX; j++) { // for each segment in current row
-            //add pixel colors to calculate average for this segment
+            // add pixel colors to calculate average for this segment
             var colorSum = {};
             colorSum["r"] = 0;
             colorSum["g"] = 0;
@@ -56,63 +86,37 @@
                 colorSum["b"] += pixelColor[2];
               }
             }
-            var avgColors = {}; //colors stored in an object
-            var avgColor = "#"; //colors as a hex string
+            var avgColors = {}; // colors stored in an Object
             avgColors["r"] = Math.ceil(colorSum["r"]/(segmentSize["x"]*segmentSize["y"]));
             avgColors["g"] = Math.ceil(colorSum["g"]/(segmentSize["x"]*segmentSize["y"]));
             avgColors["b"] = Math.ceil(colorSum["b"]/(segmentSize["x"]*segmentSize["y"]));
-            // convert colors into a hex string by checking if in only needs one digit - if so: add a "0" in front so there are always 6 hex digits for each color
-            // https://stackoverflow.com/questions/57803/how-to-convert-decimal-to-hex-in-javascript
-            var avgRhex = "";
-            if(avgColors["r"].toString(16).length == 1) {
-              avgRhex = ""+0+""+avgColors["r"].toString(16);
-            } else {
-              avgRhex = avgColors["r"].toString(16);
-            }
-            var avgGhex = "";
-            if(avgColors["g"].toString(16).length == 1) {
-              avgGhex = ""+0+""+avgColors["g"].toString(16);
-            } else {
-              avgGhex = avgColors["g"].toString(16);
-            }
-            var avgBhex = "";
-            if(avgColors["b"].toString(16).length == 1) {
-              avgBhex = ""+0+""+avgColors["b"].toString(16);
-            } else {
-              avgBhex = avgColors["b"].toString(16);
-            }
-            //rowSegmentColors.push("#"+avgRhex+avgGhex+avgBhex);
+
+            // draw the segment with its average color to the canvas
+            // (https://www.w3schools.com/tags/tryit.asp?filename=tryhtml5_canvas_fill)
+            context.beginPath();
+            context.rect(j*segmentSize["x"], i*segmentSize["y"], segmentSize["x"], segmentSize["y"]);
+            var hexColor = rgbToHex(avgColors);
+            context.fillStyle=hexColor;
+            context.fill();
+            context.lineWidth="1";
+            context.strokeStyle="white";
+            context.stroke();
+	
+            // output result
+            // output result so that it can be interpreted by a script to display the colors if it wont work with the canvas e-e
+            // y+x+r-g-b so it can be split up in python with + first, - second
+            console.log(i+"+"+j+"+"+rows[i][j][0]+"-"+rows[i][j][1]+"-"+rows[i][j][2])
+           
+            // convert the avgColor Object into an array
+            // push it to the current row then
             var avgColorList = []
             avgColorList.push(avgColors["r"]);
             avgColorList.push(avgColors["g"]);
             avgColorList.push(avgColors["b"]);
             rowSegmentColors.push(avgColorList);
           }
+          // push current row to the list of rows
           rows.push(rowSegmentColors);
-        }
-        // output result
-        for(var i = 0; i < amountSegmentsY; i++) {
-          for(var j = 0; j < amountSegmentsX; j++) {
-            // output result so that it can be interpreted by a script to display the colors if it wont work with the canvas e-e
-            // y+x+r-g-b so it can be split up in python with + first, - second
-            console.log(i+"+"+j+"+"+rows[i][j][0]+"-"+rows[i][j][1]+"-"+rows[i][j][2])
-          }
-        }
-        // draw segments on canvas (https://www.w3schools.com/tags/tryit.asp?filename=tryhtml5_canvas_fill)
-        var myCanvas = document.getElementById("myCanvas");
-        myCanvas.style.width = document.getElementById("myImg").width+"px";
-        myCanvas.style.height= document.getElementById("myImg").height+"px";
-        var context = myCanvas.getContext("2d");
-        for(var i = 0; i < amountSegmentsY; i++) {
-          for(var j = 0; j < amountSegmentsX; j++) {
-            context.beginPath();
-            context.rect(j*segmentSize["x"], i*segmentSize["y"], segmentSize["x"], segmentSize["y"]);
-            context.fillStyle = rows[i][j];
-            context.fill();
-            context.lineWidth = "1";
-            context.strokeStyle ="white";
-            context.stroke();
-          }
         }
         //write color to file (https://stackoverflow.com/questions/16055391/writing-data-to-a-local-text-file-with-javascript)
         /*var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -129,7 +133,7 @@
   </script>
 </head>
 <body>
-  <img src="picture.jpg" id="myImg"></img>
+  <img src="nasa.jpg" id="myImg"></img>
   <p id="x"></p>
   <p id="y"></p>
   <p id="color"></p>
