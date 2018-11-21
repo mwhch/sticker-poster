@@ -6,27 +6,34 @@ pygame.init()
 fileName = sys.argv[-1]
 fileLines = []
 with open(fileName, "r+") as fileData:
-    # adds lines from file with information in order:
-    # y, x, color in hex (starting with#)
+    # split output file with & for individual segment info (what used to be done with a new line to indicate a new segment)
     for line in fileData:
-        fileLines.append(line.replace("\n", "").split("+"))
+        fileLines = line.split("&")
 
-print(len(fileLines))
+# store info that is gained from input file in segmentInfo array
+segmentInfo = []
+for line in fileLines:
+    # adds lines from file with information in order:
+    # y+x+r-g-b
+    segmentInfo.append(line.split("+"))
+
+# remove last cell from array because for whatever reason this is an empty cell
+# only do this of course if it actually is the empy cell so there is no data deleted
+if len(segmentInfo[-1]) == 1:
+    del segmentInfo[-1]
+
 # order: size of segment x, size of segment y, amount segments x, amount segments y, image width, image height
-segmentSizeX = int(fileLines[0][0])
-segmentSizeY = int(fileLines[1][0])
-amountSegmentsX = int(fileLines[2][0])
-amountSegmentsY = int(fileLines[3][0])
-imgWidth = int(fileLines[4][0])
-imgHeight= int(fileLines[5][0])
+segmentSizeX = int(segmentInfo[0][0])
+segmentSizeY = int(segmentInfo[1][0])
+amountSegmentsX = int(segmentInfo[2][0])
+amountSegmentsY = int(segmentInfo[3][0])
+imgWidth = int(segmentInfo[4][0])
+imgHeight= int(segmentInfo[5][0])
 print("segmentSizeX: "+str(segmentSizeX))
 print("segmentSizeY: "+str(segmentSizeY))
 
-for i in range(6, len(fileLines)):
-    fileLines[i][2] = fileLines[i][2].split("-")
-
-#print("############")
-#print(len(fileLines[30][2]))
+for i in range(6, len(segmentInfo)):
+    segmentInfo[i][2] = segmentInfo[i][2].split("-")
 
 screen = pygame.display.set_mode((1920, 1080))
 
@@ -38,12 +45,8 @@ for  i in range(0, amountSegmentsY):
         row.append("")
     segRows.append(row)
 
-for i in range(6, len(fileLines)):
-    #print(fileLines[i])
-    segRows[int(fileLines[i][0])][int(fileLines[i][1])] = (int(fileLines[i][2][0]), int(fileLines[i][2][1]), int(fileLines[i][2][2]))
-
-#print(segRows)
-#print("y:"+str(len(segRows))+" x:"+str(len(segRows[0])))
+for i in range(6, len(segmentInfo)):
+    segRows[int(segmentInfo[i][0])][int(segmentInfo[i][1])] = (int(segmentInfo[i][2][0]), int(segmentInfo[i][2][1]), int(segmentInfo[i][2][2]))
 
 # draw segments
 for i in range(0, amountSegmentsY):

@@ -2,6 +2,7 @@
 <head>
   <meta charset="utf-8">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="FileSaver.js"></script> <!-- include FileSaver.js library to store output in a file (https://github.com/eligrey/FileSaver.js) -->
   <script type="text/javascript">
   function rgbToHex(rgbObj) { //rgbObj: Object that has keys "r", "g" and "b" which indicate the decimal rgb value
     // convert colors into a hex string by checking if in only needs one digit - if so: add a "0" in front so there are always 6 hex digits for each color
@@ -33,33 +34,35 @@
         //var offset = $(this).offset();
         var mousePosX = e.offsetX;
         var mousePosY = e.offsetY;
+
         // create canvas
         var canvas = document.createElement('canvas');
         canvas.width = document.getElementById('myImg').width;
         canvas.height = document.getElementById('myImg').height;
         var ctx = canvas.getContext('2d');
+
         // create further canvas to later draw on
         var myCanvas = document.getElementById("myCanvas");
         myCanvas.style.width = document.getElementById("myImg").width;
         myCanvas.style.height= document.getElementById("myImg").height;
         var context = myCanvas.getContext("2d");
+
         // copy image data into canvas
         var myImgElement = document.getElementById('myImg');
         ctx.drawImage(myImgElement, 0, 0);
+
         // read image data
         var imgWidth = myImgElement.width, imgHeight = myImgElement.height;
         var imgdata = ctx.getImageData(mousePosX, mousePosY, 1, 1);
         var rgbaColor = imgdata.data;
-        // display information
-        $('#color').html('R:' + rgbaColor[0] + ' G:' + rgbaColor[1] + ' B:' + rgbaColor[2] + ' A:' + rgbaColor[3]);
-        $("#x").html('x:'+mousePosX);
-        $("#y").html('y:'+mousePosY);
+
         // how many segments and what size do they have
         var amountSegmentsX = 39;
         var amountSegmentsY = 29;
         var segmentSize = {};
         segmentSize["x"] = Math.ceil(document.getElementById('myImg').width / amountSegmentsX);
         segmentSize["y"] = Math.ceil(document.getElementById('myImg').height / amountSegmentsY);
+
         //print information to interpret by whatever is going to interpret the information logged on console (yet, saving into file is hopefully working soon)
         //order: size of segment x, size of segment y, amount segments x, amount segments y, image width, image height
         console.log(segmentSize["x"]);
@@ -67,7 +70,12 @@
         console.log(amountSegmentsX);
         console.log(amountSegmentsY);
         console.log(document.getElementById('myImg').width);
-        console.log(document.getElementById('myImg').height)
+        console.log(document.getElementById('myImg').height);
+
+        // initialize FileSaver.js stuff
+        var filename = "output";
+        var text = segmentSize["x"]+"&"+segmentSize["y"]+"&"+amountSegmentsX+"&"+amountSegmentsY+"&"+document.getElementById('myImg').width+"&"+document.getElementById('myImg').height+"&";
+
         // Get color info for each segment
         var rows = [];
         for(var i = 0; i < amountSegmentsY; i++) { // for each row
@@ -101,12 +109,7 @@
             context.lineWidth="1";
             context.strokeStyle="white";
             context.stroke();
-	
-            // output result
-            // output result so that it can be interpreted by a script to display the colors if it wont work with the canvas e-e
-            // y+x+r-g-b so it can be split up in python with + first, - second
-            console.log(i+"+"+j+"+"+rows[i][j][0]+"-"+rows[i][j][1]+"-"+rows[i][j][2])
-           
+
             // convert the avgColor Object into an array
             // push it to the current row then
             var avgColorList = []
@@ -118,22 +121,27 @@
           // push current row to the list of rows
           rows.push(rowSegmentColors);
         }
-        //write color to file (https://stackoverflow.com/questions/16055391/writing-data-to-a-local-text-file-with-javascript)
-        /*var fso = new ActiveXObject("Scripting.FileSystemObject");
-        var fh = fso.OpenTextFile("colors.txt", 2, true);
-        for(var i = 0; i < amountSegmentsX; i++) {
-          for(var j = 0; j < amountSegmentsY; j++) {
-            fh.WriteLine(rows[i][j]);
+        for(var i = 0; i < amountSegmentsY; i++) {
+          for(var j = 0; j < amountSegmentsX; j++) {
+            // output result
+            // output result so that it can be interpreted by a script to display the colors if it wont work with the canvas e-e
+            // y+x+r-g-b so it can be split up in python with + first, - second
+            console.log(i+"+"+j+"+"+rows[i][j][0]+"-"+rows[i][j][1]+"-"+rows[i][j][2])
+
+            // save the same string to a file, seperate the info for each segment with a &
+            text += (i+"+"+j+"+"+rows[i][j][0]+"-"+rows[i][j][1]+"-"+rows[i][j][2]+"&")
           }
         }
-        fh.Close();
-        console.log("file should be created")*/
+        // save result to file
+        // using FileSaver.js library (see above)
+        var blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, filename+".txt");
       });
   });
   </script>
 </head>
 <body>
-  <img src="nasa.jpg" id="myImg"></img>
+  <img src="picture.jpg" id="myImg"></img>
   <p id="x"></p>
   <p id="y"></p>
   <p id="color"></p>
