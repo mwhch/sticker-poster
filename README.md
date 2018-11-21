@@ -13,5 +13,6 @@ The information contained in the output file contains basic information about th
 4. amount of segments in y direction
 5. image width,
 6. image height
+
 everything that follows these 6 lines is a segments y and x coordinate and average (decimal) rgb color in the format:
 y+x+r-g-b 
